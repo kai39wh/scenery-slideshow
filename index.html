@@ -124,25 +124,28 @@ const save=()=>{try{localStorage.setItem('scenerySettings',JSON.stringify(S))}ca
 const $=id=>document.getElementById(id);
 
 /* ---------- 写真の取得 ---------- */
+/* [キー, 表示名, 予備の検索語, 絵画か, Wikimediaの分類(主題), 合っているか確認する語] */
 const THEMES=[
- ['mountain','山',['mountain','mountains landscape','Alps','volcano','Mount Fuji']],
- ['sea','海',['sea','coast','beach','ocean','seascape']],
- ['lake','湖・川',['lake','lake reflection','river','river valley']],
- ['forest','森・紅葉',['forest','autumn forest','autumn leaves','bamboo forest']],
- ['waterfall','滝',['waterfall','cascade']],
- ['flower','花畑・桜',['flower field','cherry blossom','tulip field','lavender field']],
- ['sky','夕日・空',['sunset','sunrise','clouds landscape']],
- ['stars','星空・オーロラ',['milky way','night sky stars','aurora']],
- ['snow','雪景色',['snow landscape','winter landscape','snowy mountain']],
- ['desert','砂漠・峡谷',['desert','sand dunes','canyon']],
- ['city','夜景・街並み',['city skyline night','cityscape','old town']],
- ['japan','日本の風景',['Japan landscape','Kyoto','Japanese garden','shrine Japan']],
- ['animal','動物',['bird','wildlife landscape','cat','deer','horse','fox']],
- ['island','島・南国',['island','tropical beach','lagoon']],
- ['painting','西洋絵画',['still life painting','Monet painting','Van Gogh painting','Vermeer painting','Pissarro painting','Sisley painting','landscape oil painting'],1],
- ['lpainting','風景画',['landscape painting','seascape painting','Turner painting','Hudson River School painting','Constable painting'],1],
- ['ukiyoe','浮世絵・日本画',['ukiyo-e','Hokusai','Hiroshige','Japanese painting','Ito Jakuchu'],1],
- ['sculpture','彫刻・美術館',['sculpture garden','museum interior','art museum','museum building'],0]];
+ ['mountain','山',['mountain','Alps','volcano','Mount Fuji'],0,['mountains','volcanoes','the Alps','the Alps in Switzerland','glaciers','mountain ranges','Mount Fuji'],/mountain|\bmount\b|\bmt\.?\b|peak|summit|alps|alpine|volcan|glacier|massif|ridge|himalaya|rocky|dolomit|matterhorn|fuji|山|岳|峰/i],
+ ['sea','海',['sea','coast','seascape'],0,['coasts','seascapes','beaches','the sea','waves','cliffs','sea stacks'],/\bseas?\b|coast|ocean|seascape|beach|shore|cliff|wave|bay\b|harbou?r|lighthouse|海|浜|岬/i],
+ ['lake','湖・川',['lake','river'],0,['lakes','rivers','reflections','lakes of Switzerland'],/lake|river|loch|\bsee\b|lac\b|lago|reflection|stream|湖|川|河/i],
+ ['forest','森・紅葉',['forest','autumn forest'],0,['forests','trees','autumn','autumn foliage'],/forest|woods?\b|tree|autumn|fall foliage|foliage|森|林|紅葉/i],
+ ['waterfall','滝',['waterfall'],0,['waterfalls'],/waterfall|falls\b|cascade|滝/i],
+ ['flower','花畑・桜',['flower field','cherry blossom'],0,['flowers','cherry blossoms','flower fields','tulips','lavender','gardens and parks'],/flower|blossom|bloom|tulip|lavender|sakura|garden|meadow|花|桜/i],
+ ['sky','夕日・空',['sunset','sunrise'],0,['sunsets','sunrises','clouds','the sky','dawn and dusk'],/sunset|sunrise|dusk|dawn|cloud|\bsky\b|twilight|golden hour|夕|朝日|空|雲/i],
+ ['stars','星空・オーロラ',['milky way','aurora'],0,['astronomy','night sky','the Milky Way','auroras','polar lights','star trails'],/milky way|night sky|\bstars?\b|aurora|polar light|astro|galaxy|nebula|star trail|星|オーロラ/i],
+ ['snow','雪景色',['snow landscape','winter landscape'],0,['winter','snow','snowscapes','winter landscapes'],/snow|winter|frost|\bice\b|雪|冬/i],
+ ['desert','砂漠・峡谷',['desert','canyon'],0,['deserts','canyons','sand dunes','rock formations'],/desert|dune|canyon|sahara|arid|mesa|butte|砂漠|砂丘|峡谷/i],
+ ['city','夜景・街並み',['cityscape','city at night'],0,['cityscapes','cities at night','skylines','night photography'],/city|cityscape|skyline|town|urban|night|downtown|street|街|都市|夜景/i],
+ ['japan','日本の風景',['Japan landscape','Kyoto'],0,['Japan','Kyoto','Japanese gardens','Mount Fuji'],/japan|kyoto|tokyo|nara|osaka|hokkaido|fuji|shrine|temple|jinja|日本|京都|神社|寺/i],
+ ['animal','動物',['bird','mammal'],0,['birds','mammals','Felidae','Equidae','Cervidae','Canidae'],/bird|mammal|aves|felid|equid|cervid|canid|\bcat\b|horse|deer|fox|wolf|bear|owl|eagle|swan|duck|heron|parrot|鳥|猫|馬|鹿|狐/i],
+ ['island','島・南国',['island','tropical beach'],0,['islands','beaches','lagoons','atolls'],/island|isle|beach|lagoon|atoll|tropic|島|南国/i],
+ ['painting','西洋絵画',['Monet painting','Van Gogh painting','Vermeer painting','still life painting'],1,['paintings','still life paintings','Paintings by Claude Monet','Paintings by Vincent van Gogh','Paintings by Johannes Vermeer','Paintings by Camille Pissarro','Paintings by Alfred Sisley','Impressionist paintings'],/painting|oil on canvas|monet|van gogh|vermeer|pissarro|sisley|still life|impressionis|絵画|油彩/i],
+ ['lpainting','風景画',['landscape painting','seascape painting'],1,['landscape paintings','marine art','Paintings by J. M. W. Turner','Paintings by John Constable','Hudson River School paintings','Landscape paintings by Claude Monet'],/landscape painting|seascape|marine art|turner|constable|hudson river|painting|風景画/i],
+ ['ukiyoe','浮世絵・日本画',['ukiyo-e','Hokusai','Hiroshige'],1,['ukiyo-e','Thirty-six Views of Mount Fuji','One Hundred Famous Views of Edo','The Fifty-three Stations of the Tōkaidō','Woodblock prints by Hiroshige','Woodblock prints by Katsushika Hokusai','Japanese paintings'],/ukiyo|hokusai|hiroshige|woodblock|japanese painting|edo|tokaido|浮世絵|北斎|広重|日本画/i],
+ ['sculpture','彫刻・美術館',['sculpture garden','museum interior'],0,['museums','museum interiors','art museums','sculpture gardens'],/museum|gallery|sculpture|statue|art|美術館|博物館|彫刻/i]];
+const SUBJ=Object.fromEntries(THEMES.map(t=>[t[0],t[4]]));
+const POS=Object.fromEntries(THEMES.map(t=>[t[0],t[5]]));
 const ART=Object.fromEntries(THEMES.map(t=>[t[0],!!t[3]]));
 const WORDS=Object.fromEntries(THEMES.map(t=>[t[0],t[2]]));
 let queue=[],history=[],seen=new Set(),loading=false;
@@ -150,20 +153,30 @@ function words(){const w=S.themes.flatMap(k=>WORDS[k]||[]);return w.length?w:WOR
 const strip=h=>{const d=document.createElement('div');d.innerHTML=h||'';return (d.textContent||'').replace(/\s+/g,' ').trim()};
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 /* ---------- 安全フィルター(常に有効) ---------- */
-const NEG=' -nude -naked -nudity -erotic -sex -sexual -breast -topless -shunga -corpse -dead -death -war -battle -blood -execution -torture -crucifixion -massacre -hunting -weapon -skull -skeleton -surgery -anatomy -insect -insects -butterfly -moth -spider -beetle -snake -lizard -frog -reptile -amphibian -crocodile -turtle';
+const NEG=' -nude -naked -erotic -insect -snake -corpse -war'; // 検索文は短く保ち、細かい除外は下の BAD で行う
 const BAD=/nud|naked|erotic|sexual|\bsex|breast|topless|genital|shunga|odalisque|\bvenus\b|bath(ing|er|ers)\b|lingerie|bikini|corpse|cadaver|\bdead\b|death|dying|\bwars?\b|battle|military|soldier|blood|execution|torture|crucifi|massacre|murder|wound|injur|surgery|medical|anatom|\bhunt|slaughter|butcher|weapon|\bguns?\b|rifle|skelet|skull|funeral|\bgraves?\b|cemeter|prison|accident|disaster|fire damage|protest|politic|裸|ヌード|春画|死|戦争|戦い|血|処刑|遺体|insect|\bbugs?\b|beetle|butterfl|\bmoths?\b|caterpillar|larva|pupa|spider|arachn|\bants?\b|\bbees?\b|bumblebee|wasp|hornet|\bfl(y|ies)\b|mosquito|cockroach|cicada|dragonfl|firefl|damselfl|grasshopper|locust|mantis|centipede|millipede|\bworms?\b|earthworm|snail|\bslugs?\b|scorpion|\bticks?\b|arthropod|lepidopter|coleopter|hymenopter|dipter|odonat|orthopter|reptil|snake|serpent|python|viper|cobra|lizard|gecko|iguana|chameleon|crocodil|alligator|turtle|tortoise|squamat|testudin|amphibia|\bfrogs?\b|\btoads?\b|salamander|\bnewts?\b|虫|昆虫|蜘蛛|クモ|蝶|チョウ|蛾|蛍|ホタル|蜂|ハチ|蟻|アリ|蛇|ヘビ|トカゲ|ヤモリ|カエル|蛙|ワニ|カメ|亀/i;
 let block=[];try{block=JSON.parse(localStorage.getItem('sceneryBlock')||'[]')}catch(e){}
 function blockNow(){const it=history[history.length-1];if(!it)return;
   if(!block.includes(it.id))block.push(it.id);if(block.length>800)block=block.slice(-800);
   try{localStorage.setItem('sceneryBlock',JSON.stringify(block))}catch(e){}
   queue=queue.filter(q=>q.id!==it.id);history.pop();clearTimeout(timer);next()}
-async function fetchBatch(strict){
-  const th=pick(S.themes.filter(k=>WORDS[k]).concat(S.themes.some(k=>WORDS[k])?[]:['mountain']));
-  const art=ART[th],w=pick(WORDS[th]);
-  const cat=strict?' incategory:Featured_pictures_on_Wikimedia_Commons':(art?'':' incategory:Quality_images');
+/* mode 0: テーマ別の分類から直接 / 1: 分類の下位まで含めて / 2: 秀逸画像をキーワード検索+確認 / 3: キーワード検索+確認 */
+const catName=c=>/^(Paintings|Landscape paintings|Woodblock|Thirty|One Hundred|The Fifty|Hudson|Impressionist|Japanese paintings|Mount Fuji$|Kyoto$|Japan$)/.test(c)?[c]:['Featured pictures of '+c,'Quality images of '+c];
+async function fetchBatch(mode,th){
+  const art=ART[th];let q;
+  if(mode===0){
+    const cats=[...new Set(SUBJ[th].flatMap(catName))].sort(()=>Math.random()-.5).map(c=>c.replace(/ /g,'_'));
+    q='incategory:'+cats.shift();
+    while(cats.length&&(q+'|'+cats[0]).length<200)q+='|'+cats.shift(); // 検索文の長さ制限(約300文字)に収める
+  }else if(mode===1){
+    q='deepcat:"'+pick(SUBJ[th].flatMap(catName))+'"';
+  }else{
+    q=pick(WORDS[th])+(mode===2?' incategory:Featured_pictures_on_Wikimedia_Commons':(art?'':' incategory:Quality_images'));
+  }
+  const w=q;
   const sw=Math.max(screen.width,screen.height)*(window.devicePixelRatio>1?1.5:1);
   const p=new URLSearchParams({action:'query',format:'json',origin:'*',generator:'search',gsrnamespace:'6',
-    gsrsearch:w+' filetype:bitmap filew:>'+(art?1000:1600)+cat+NEG,gsrlimit:'40',gsrsort:'random',
+    gsrsearch:w+' filetype:bitmap filew:>'+(art?1000:1600)+NEG,gsrlimit:'40',gsrsort:'random',
     prop:'imageinfo|categories',cllimit:'max',iiprop:'url|size|extmetadata',iiurlwidth:String(Math.min(2560,Math.round(sw))),
     iiextmetadatafilter:'Artist|LicenseShortName|ObjectName|ImageDescription'});
   const r=await fetch('https://commons.wikimedia.org/w/api.php?'+p);
@@ -177,6 +190,7 @@ async function fetchBatch(strict){
     const md=ii.extmetadata||{};
     const text=[pg.title,pg.categories.map(c=>c.title).join(' '),strip(md.ObjectName&&md.ObjectName.value),strip(md.ImageDescription&&md.ImageDescription.value)].join(' ');
     if(BAD.test(text)){seen.add(pg.title);continue}
+    if(mode>=2&&!POS[th].test(text))continue; // キーワード検索の結果はテーマに合うか確認
     const ratio=ii.width/ii.height;
     if(art?(ratio<0.5||ratio>2.8):(land?ratio<1.25:ratio>0.9))continue; // 写真は画面の向きに合うものだけ、絵画は切らずに全体表示
     const m=ii.extmetadata||{};
@@ -186,14 +200,20 @@ async function fetchBatch(strict){
   }
   return out;
 }
+function themeList(){const v=S.themes.filter(k=>SUBJ[k]);return v.length?v:['mountain']}
 async function refill(){
   if(loading)return; loading=true;
   try{
-    for(let i=0;i<3&&queue.length<8;i++){
-      let b=await fetchBatch(true);
-      if(b.length<3)b=b.concat(await fetchBatch(false));
-      b.sort(()=>Math.random()-.5); queue.push(...b);
+    const ths=themeList().sort(()=>Math.random()-.5);
+    for(let i=0;i<Math.max(3,ths.length)&&queue.length<10;i++){
+      const th=ths[i%ths.length];let b=[];
+      for(const mode of [0,1,2,3]){
+        try{b=b.concat(await fetchBatch(mode,th))}catch(e){}
+        if(b.length>=4)break;
+      }
+      b.sort(()=>Math.random()-.5); queue.push(...b.slice(0,8));
     }
+    queue.sort(()=>Math.random()-.5);
     if(seen.size>600)seen.clear();
   }catch(e){console.log(e)}
   loading=false;
