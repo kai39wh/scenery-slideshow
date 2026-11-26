@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>景色スライドショー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;500;700&family=M+PLUS+Rounded+1c:wght@300;500;700&family=Zen+Old+Mincho:wght@400;700&family=Shippori+Mincho:wght@400;700&family=Kosugi+Maru&family=Orbitron:wght@400;700&family=Roboto+Mono:wght@300;500&family=Playfair+Display:wght@400;700&family=Quicksand:wght@300;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;color:#fff;font-family:"Noto Sans JP",sans-serif;-webkit-user-select:none;user-select:none}
+.slide{position:fixed;inset:0;background:#000;opacity:0;transition:opacity 1.8s ease;overflow:hidden}
+.slide .pic{position:absolute;inset:0;background:center/cover no-repeat}
+.slide .blur{position:absolute;inset:-60px;background:center/cover no-repeat;filter:blur(34px) brightness(.5);display:none}
+.slide.art .pic{background-size:contain;inset:3vmin}
+.slide.art .blur{display:block}
+.slide.show{opacity:1}
+.slide.zoom{animation:kb 14s ease-out forwards}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.07)}}
+@media (prefers-reduced-motion:reduce){.slide.zoom{animation:none}}
+#clockWrap{position:fixed;inset:0;display:flex;padding:4vmin;pointer-events:none;z-index:5}
+#clock{line-height:1.05;text-align:center;white-space:nowrap}
+#time{font-variant-numeric:tabular-nums;letter-spacing:.02em}
+#sec{font-size:.45em;opacity:.85;margin-left:.15em}
+#date{font-size:.28em;margin-top:.25em;opacity:.92}
+#credit{position:fixed;right:10px;bottom:8px;font-size:11px;opacity:.55;max-width:60vw;text-align:right;text-shadow:0 1px 3px #000;z-index:6;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#msg{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;z-index:4;text-align:center;padding:20px;line-height:1.7}
+/* 操作バー */
+#bar{position:fixed;left:50%;top:14px;transform:translateX(-50%);display:flex;gap:8px;z-index:20;transition:opacity .4s}
+#bar.hide{opacity:0;pointer-events:none}
+#bar button{font:500 15px "Noto Sans JP",sans-serif;color:#fff;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.35);border-radius:22px;min-height:44px;padding:0 16px;backdrop-filter:blur(6px)}
+/* 設定パネル */
+#panel{position:fixed;top:0;right:0;height:100%;width:min(380px,92vw);background:rgba(18,20,24,.94);z-index:30;padding:18px 18px 40px;overflow-y:auto;transform:translateX(105%);transition:transform .3s;backdrop-filter:blur(10px)}
+#panel.open{transform:none}
+#panel h2{font-size:20px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+#panel h3{font-size:13px;color:#9fb4c8;margin:18px 0 8px;font-weight:500}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0;font-size:15px}
+.row label{flex:1}
+select,input[type=number]{font:16px "Noto Sans JP",sans-serif;background:#2a2e35;color:#fff;border:1px solid #444;border-radius:8px;min-height:40px;padding:0 8px;max-width:190px}
+input[type=range]{width:170px}
+input[type=color]{width:56px;height:40px;border:none;background:none}
+input[type=checkbox]{width:24px;height:24px}
+.btn{font:15px "Noto Sans JP",sans-serif;color:#fff;background:#3b6ea5;border:none;border-radius:8px;min-height:44px;padding:0 14px}
+.btn.ghost{background:#2a2e35}
+#posGrid{display:grid;grid-template-columns:repeat(3,44px);gap:4px}
+#posGrid button{height:36px;background:#2a2e35;border:1px solid #444;border-radius:6px;color:#fff}
+#posGrid button.on{background:#3b6ea5}
+#themes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+#themes label{display:flex;align-items:center;gap:8px;background:#2a2e35;border:1px solid #444;border-radius:8px;min-height:44px;padding:0 10px;font-size:15px}
+.note{font-size:12px;color:#8a96a3;line-height:1.6;margin-top:16px}
+</style>
+</head>
+<body>
+<div class="slide" id="s0"><div class="blur"></div><div class="pic"></div></div>
+<div class="slide" id="s1"><div class="blur"></div><div class="pic"></div></div>
+<div id="msg">景色の写真を読み込んでいます…</div>
+<div id="clockWrap"><div id="clock"><div><span id="time"></span><span id="sec"></span></div><div id="date"></div></div></div>
+<div id="credit"></div>
+
+<div id="bar" class="hide">
+  <button id="bPrev">◀</button>
+  <button id="bPause">一時停止</button>
+  <button id="bNext">▶</button>
+  <button id="bBlock">この画像を出さない</button>
+  <button id="bFull">全画面</button>
+  <button id="bSet">設定</button>
+</div>
+
+<div id="panel">
+  <h2>設定 <button class="btn ghost" id="bClose">閉じる</button></h2>
+
+  <h3>写真</h3>
+  <div style="font-size:15px;margin:8px 0 6px">テーマ(いくつでも選べます)</div>
+  <div id="themes"></div>
+  <div class="row"><button class="btn ghost" id="tAll">すべて選ぶ</button><button class="btn ghost" id="tApply">写真を入れ替える</button></div>
+  <div class="row"><label for="interval">切り替え(秒)</label><input type="number" id="interval" min="3" max="600"></div>
+  <div class="row"><label for="zoom">ゆっくりズーム</label><input type="checkbox" id="zoom"></div>
+  <div class="row"><label for="credit1">撮影者の表示</label><input type="checkbox" id="credit1"></div>
+
+  <h3>時計</h3>
+  <div class="row"><label for="showClock">時計を表示</label><input type="checkbox" id="showClock"></div>
+  <div class="row"><label for="font">書体</label>
+    <select id="font">
+      <option value='"Noto Sans JP",sans-serif'>ゴシック(Noto Sans)</option>
+      <option value='"M PLUS Rounded 1c",sans-serif'>丸ゴシック(M PLUS)</option>
+      <option value='"Kosugi Maru",sans-serif'>丸ゴシック(小杉丸)</option>
+      <option value='"Zen Old Mincho",serif'>明朝(Zen Old)</option>
+      <option value='"Shippori Mincho",serif'>明朝(しっぽり)</option>
+      <option value='"Playfair Display",serif'>欧文セリフ(Playfair)</option>
+      <option value='"Quicksand",sans-serif'>欧文丸(Quicksand)</option>
+      <option value='"Orbitron",sans-serif'>デジタル風(Orbitron)</option>
+      <option value='"Roboto Mono",monospace'>等幅(Roboto Mono)</option>
+    </select></div>
+  <div class="row"><label for="weight">太さ</label>
+    <select id="weight"><option value="300">細い</option><option value="500">普通</option><option value="700">太い</option></select></div>
+  <div class="row"><label for="size">大きさ</label><input type="range" id="size" min="4" max="30" step="0.5"></div>
+  <div class="row"><label for="color">文字色</label><input type="color" id="color"></div>
+  <div class="row"><label for="opacity">不透明度</label><input type="range" id="opacity" min="0.2" max="1" step="0.05"></div>
+  <div class="row"><label for="shadow">影をつける</label><input type="checkbox" id="shadow"></div>
+  <div class="row"><label for="h24">24時間表示</label><input type="checkbox" id="h24"></div>
+  <div class="row"><label for="showSec">秒を表示</label><input type="checkbox" id="showSec"></div>
+  <div class="row"><label for="showDate">日付を表示</label><input type="checkbox" id="showDate"></div>
+  <div class="row"><label>位置</label><div id="posGrid"></div></div>
+
+  <h3>リモコン(パソコンから操作)</h3>
+  <div class="row"><label for="remoteOn">リモコンを使う</label><input type="checkbox" id="remoteOn"></div>
+  <div class="row"><span>接続コード</span><b id="code" style="font-size:24px;letter-spacing:.12em"></b></div>
+  <div class="row"><span id="rStat" style="font-size:13px;color:#9fb4c8"></span><button class="btn ghost" id="newCode">コードを変える</button></div>
+  <p class="note" style="margin-top:4px">パソコンで <b id="rUrl"></b> を開き、この接続コードを入れると操作できます。</p>
+
+  <div class="row" style="margin-top:20px"><button class="btn ghost" id="bReset">初期設定に戻す</button></div>
+  <p class="note">写真は Wikimedia Commons の「秀逸な画像」から選んだテーマの写真を自動で取得しています。不適切になりやすい画像(裸体・暴力・死・戦争など)は自動で除外しています。気になる画像は「この画像を出さない」で今後表示されなくなります。各写真の著作権は撮影者にあり、画面右下に撮影者とライセンスを表示しています。画面をタップすると操作ボタンが出ます。</p>
+</div>
+
+<script>
+{
+const DEF={themes:['mountain','sea'],interval:10,zoom:true,credit:true,showClock:true,font:'"Noto Sans JP",sans-serif',weight:'300',size:14,color:'#ffffff',opacity:0.95,shadow:true,h24:true,showSec:false,showDate:true,pos:'8',remoteOn:true};
+let S={...DEF};
+try{Object.assign(S,JSON.parse(localStorage.getItem('scenerySettings')||'{}'))}catch(e){}
+if(S.theme){S.themes=S.theme==='both'?['mountain','sea']:[S.theme];delete S.theme}
+if(!Array.isArray(S.themes)||!S.themes.length)S.themes=[...DEF.themes];
+const save=()=>{try{localStorage.setItem('scenerySettings',JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id);
+
+/* ---------- 写真の取得 ---------- */
+const THEMES=[
+ ['mountain','山',['mountain','mountains landscape','Alps','volcano','Mount Fuji']],
+ ['sea','海',['sea','coast','beach','ocean','seascape']],
+ ['lake','湖・川',['lake','lake reflection','river','river valley']],
+ ['forest','森・紅葉',['forest','autumn forest','autumn leaves','bamboo forest']],
+ ['waterfall','滝',['waterfall','cascade']],
+ ['flower','花畑・桜',['flower field','cherry blossom','tulip field','lavender field']],
+ ['sky','夕日・空',['sunset','sunrise','clouds landscape']],
+ ['stars','星空・オーロラ',['milky way','night sky stars','aurora']],
+ ['snow','雪景色',['snow landscape','winter landscape','snowy mountain']],
+ ['desert','砂漠・峡谷',['desert','sand dunes','canyon']],
+ ['city','夜景・街並み',['city skyline night','cityscape','old town']],
+ ['japan','日本の風景',['Japan landscape','Kyoto','Japanese garden','shrine Japan']],
+ ['animal','動物',['bird','wildlife landscape','cat','deer','butterfly']],
+ ['island','島・南国',['island','tropical beach','lagoon']],
+ ['painting','西洋絵画',['still life painting','Monet painting','Van Gogh painting','Vermeer painting','Pissarro painting','Sisley painting','landscape oil painting'],1],
+ ['lpainting','風景画',['landscape painting','seascape painting','Turner painting','Hudson River School painting','Constable painting'],1],
+ ['ukiyoe','浮世絵・日本画',['ukiyo-e','Hokusai','Hiroshige','Japanese painting','Ito Jakuchu'],1],
+ ['sculpture','彫刻・美術館',['sculpture garden','museum interior','art museum','museum building'],0]];
+const ART=Object.fromEntries(THEMES.map(t=>[t[0],!!t[3]]));
+const WORDS=Object.fromEntries(THEMES.map(t=>[t[0],t[2]]));
+let queue=[],history=[],seen=new Set(),loading=false;
+function words(){const w=S.themes.flatMap(k=>WORDS[k]||[]);return w.length?w:WORDS.mountain}
+const strip=h=>{const d=document.createElement('div');d.innerHTML=h||'';return (d.textContent||'').replace(/\s+/g,' ').trim()};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+/* ---------- 安全フィルター(常に有効) ---------- */
+const NEG=' -nude -naked -nudity -erotic -sex -sexual -breast -topless -shunga -corpse -dead -death -war -battle -blood -execution -torture -crucifixion -massacre -hunting -weapon -skull -skeleton -surgery -anatomy';
+const BAD=/nud|naked|erotic|sexual|\bsex|breast|topless|genital|shunga|odalisque|\bvenus\b|bath(ing|er|ers)\b|lingerie|bikini|corpse|cadaver|\bdead\b|death|dying|\bwars?\b|battle|military|soldier|blood|execution|torture|crucifi|massacre|murder|wound|injur|surgery|medical|anatom|\bhunt|slaughter|butcher|weapon|\bguns?\b|rifle|skelet|skull|funeral|\bgraves?\b|cemeter|prison|accident|disaster|fire damage|protest|politic|裸|ヌード|春画|死|戦争|戦い|血|処刑|遺体/i;
+let block=[];try{block=JSON.parse(localStorage.getItem('sceneryBlock')||'[]')}catch(e){}
+function blockNow(){const it=history[history.length-1];if(!it)return;
+  if(!block.includes(it.id))block.push(it.id);if(block.length>800)block=block.slice(-800);
+  try{localStorage.setItem('sceneryBlock',JSON.stringify(block))}catch(e){}
+  queue=queue.filter(q=>q.id!==it.id);history.pop();clearTimeout(timer);next()}
+async function fetchBatch(strict){
+  const th=pick(S.themes.filter(k=>WORDS[k]).concat(S.themes.some(k=>WORDS[k])?[]:['mountain']));
+  const art=ART[th],w=pick(WORDS[th]);
+  const cat=strict?' incategory:Featured_pictures_on_Wikimedia_Commons':(art?'':' incategory:Quality_images');
+  const sw=Math.max(screen.width,screen.height)*(window.devicePixelRatio>1?1.5:1);
+  const p=new URLSearchParams({action:'query',format:'json',origin:'*',generator:'search',gsrnamespace:'6',
+    gsrsearch:w+' filetype:bitmap filew:>'+(art?1000:1600)+cat+NEG,gsrlimit:'40',gsrsort:'random',
+    prop:'imageinfo|categories',cllimit:'max',iiprop:'url|size|extmetadata',iiurlwidth:String(Math.min(2560,Math.round(sw))),
+    iiextmetadatafilter:'Artist|LicenseShortName|ObjectName|ImageDescription'});
+  const r=await fetch('https://commons.wikimedia.org/w/api.php?'+p);
+  const j=await r.json();
+  const pages=Object.values((j.query&&j.query.pages)||{});
+  const land=innerWidth>=innerHeight;
+  const out=[];
+  for(const pg of pages){
+    const ii=pg.imageinfo&&pg.imageinfo[0]; if(!ii||seen.has(pg.title)||block.includes(pg.title))continue;
+    if(!pg.categories)continue; // 分類が確認できない画像は出さない
+    const md=ii.extmetadata||{};
+    const text=[pg.title,pg.categories.map(c=>c.title).join(' '),strip(md.ObjectName&&md.ObjectName.value),strip(md.ImageDescription&&md.ImageDescription.value)].join(' ');
+    if(BAD.test(text)){seen.add(pg.title);continue}
+    const ratio=ii.width/ii.height;
+    if(art?(ratio<0.5||ratio>2.8):(land?ratio<1.25:ratio>0.9))continue; // 写真は画面の向きに合うものだけ、絵画は切らずに全体表示
+    const m=ii.extmetadata||{};
+    out.push({id:pg.title,url:ii.thumburl||ii.url,title:strip(m.ObjectName&&m.ObjectName.value)||pg.title.replace(/^File:|\.\w+$/g,''),
+      artist:strip(m.Artist&&m.Artist.value).slice(0,80),art,lic:strip(m.LicenseShortName&&m.LicenseShortName.value),page:ii.descriptionurl});
+    seen.add(pg.title);
+  }
+  return out;
+}
+async function refill(){
+  if(loading)return; loading=true;
+  try{
+    for(let i=0;i<3&&queue.length<8;i++){
+      let b=await fetchBatch(true);
+      if(b.length<3)b=b.concat(await fetchBatch(false));
+      b.sort(()=>Math.random()-.5); queue.push(...b);
+    }
+    if(seen.size>600)seen.clear();
+  }catch(e){console.log(e)}
+  loading=false;
+}
+const preload=u=>new Promise((ok,ng)=>{const im=new Image();im.onload=()=>ok(u);im.onerror=ng;im.src=u});
+
+/* ---------- スライド ---------- */
+let cur=0,timer=null,paused=false,back=[];
+async function next(){
+  if(!queue.length)await refill();
+  if(queue.length<4)refill();
+  const it=queue.shift();
+  if(!it){$('msg').textContent='写真を取得できませんでした。インターネット接続を確認してください。30秒後に再試行します。';schedule(30);return}
+  try{await preload(it.url)}catch(e){return next()}
+  history.push(it); if(history.length>30)history.shift();
+  show(it);
+}
+function show(it){
+  $('msg').style.display='none';
+  const nx=$('s'+(1-cur)),cu=$('s'+cur),bg='url("'+it.url.replace(/"/g,'%22')+'")';
+  nx.querySelector('.pic').style.backgroundImage=bg;
+  nx.querySelector('.blur').style.backgroundImage=it.art?bg:'none';
+  nx.classList.toggle('art',!!it.art);
+  nx.classList.remove('zoom');void nx.offsetWidth;
+  if(S.zoom)nx.classList.add('zoom');
+  nx.classList.add('show');cu.classList.remove('show');
+  cur=1-cur;
+  const c=[it.title,it.artist&&((it.art?'作者: ':'撮影: ')+it.artist),it.lic].filter(Boolean).join(' / ');
+  $('credit').textContent=c+' — Wikimedia Commons';
+  schedule(S.interval);
+  sendStateSoon();
+}
+function schedule(sec){clearTimeout(timer);if(!paused)timer=setTimeout(next,Math.max(3,sec)*1000)}
+function prev(){
+  if(history.length<2)return;
+  queue.unshift(history.pop());
+  show(history[history.length-1]);
+}
+
+/* ---------- 時計 ---------- */
+const WD=['日','月','火','水','木','金','土'];
+function tick(){
+  const d=new Date();let h=d.getHours();const mi=String(d.getMinutes()).padStart(2,'0');
+  let ap='';
+  if(!S.h24){ap=h<12?'午前 ':'午後 ';h=h%12||12}
+  $('time').textContent=ap+(S.h24?String(h).padStart(2,'0'):h)+':'+mi;
+  $('sec').textContent=S.showSec?String(d.getSeconds()).padStart(2,'0'):'';
+  $('date').textContent=`${d.getMonth()+1}月${d.getDate()}日(${WD[d.getDay()]})`;
+}
+function applyClock(){
+  const c=$('clock'),w=$('clockWrap');
+  w.style.display=S.showClock?'flex':'none';
+  c.style.fontFamily=S.font;c.style.fontWeight=S.weight;
+  c.style.fontSize=S.size+'vmin';c.style.color=S.color;c.style.opacity=S.opacity;
+  c.style.textShadow=S.shadow?'0 2px 12px rgba(0,0,0,.6),0 1px 3px rgba(0,0,0,.5)':'none';
+  $('date').style.display=S.showDate?'block':'none';
+  const p=+S.pos;
+  w.style.justifyContent=['flex-start','center','flex-end'][p%3];
+  w.style.alignItems=['flex-start','center','flex-end'][Math.floor(p/3)];
+  c.style.textAlign=['left','center','right'][p%3];
+  $('credit').style.display=S.credit?'block':'none';
+  tick();
+}
+
+/* ---------- 設定パネル ---------- */
+const grid=$('posGrid');
+grid.innerHTML=['↖','↑','↗','←','●','→','↙','↓','↘'].map((t,i)=>`<button data-p="${i}">${t}</button>`).join('');
+function syncForm(){
+  for(const k of ['interval','font','weight','size','color','opacity'])$(k).value=S[k];
+  for(const k of ['zoom','showClock','shadow','h24','showSec','showDate'])$(k).checked=S[k];
+  $('credit1').checked=S.credit;$('remoteOn').checked=S.remoteOn;
+  $('themes').querySelectorAll('input').forEach(c=>c.checked=S.themes.includes(c.value));
+  grid.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p==S.pos));
+}
+for(const k of ['font','weight','size','color','opacity'])$(k).addEventListener('input',e=>{S[k]=k==='size'||k==='opacity'?+e.target.value:e.target.value;applyClock();save()});
+for(const k of ['zoom','showClock','shadow','h24','showSec','showDate'])$(k).addEventListener('change',e=>{S[k]=e.target.checked;applyClock();save()});
+$('credit1').addEventListener('change',e=>{S.credit=e.target.checked;applyClock();save()});
+$('interval').addEventListener('change',e=>{S.interval=Math.min(600,Math.max(3,+e.target.value||10));e.target.value=S.interval;save();schedule(S.interval)});
+$('themes').innerHTML=THEMES.map(t=>`<label><input type="checkbox" value="${t[0]}">${t[1]}</label>`).join('');
+function readThemes(){const v=[...$('themes').querySelectorAll('input:checked')].map(c=>c.value);S.themes=v.length?v:['mountain'];save()}
+let themeDirty=false;
+$('themes').addEventListener('change',()=>{readThemes();themeDirty=true});
+$('tAll').addEventListener('click',()=>{$('themes').querySelectorAll('input').forEach(c=>c.checked=true);readThemes();themeDirty=true});
+function reloadPhotos(){themeDirty=false;queue=[];clearTimeout(timer);refill().then(next)}
+$('tApply').addEventListener('click',reloadPhotos);
+grid.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.pos=b.dataset.p;syncForm();applyClock();save()});
+$('bReset').addEventListener('click',()=>{S={...DEF};save();syncForm();applyClock()});
+
+/* ---------- 操作 ---------- */
+const bar=$('bar'),panel=$('panel');let hideT;
+function showBar(){bar.classList.remove('hide');clearTimeout(hideT);hideT=setTimeout(()=>bar.classList.add('hide'),4000)}
+document.addEventListener('click',e=>{if(panel.contains(e.target))return;if(!bar.contains(e.target)){showBar()}else showBar()});
+$('bSet').addEventListener('click',()=>{panel.classList.add('open')});
+$('bClose').addEventListener('click',()=>{panel.classList.remove('open');showBar();if(themeDirty)reloadPhotos()});
+$('bNext').addEventListener('click',()=>{clearTimeout(timer);next()});
+$('bPrev').addEventListener('click',prev);
+$('bBlock').addEventListener('click',blockNow);
+$('bPause').addEventListener('click',e=>{paused=!paused;e.target.textContent=paused?'再生':'一時停止';paused?clearTimeout(timer):schedule(S.interval)});
+$('bFull').addEventListener('click',()=>{
+  const d=document.documentElement;
+  try{if(!document.fullscreenElement){(d.requestFullscreen||d.webkitRequestFullscreen).call(d)}else document.exitFullscreen()}catch(e){}
+  wake();
+});
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')$('bNext').click();if(e.key==='ArrowLeft')prev()});
+
+/* 画面を消さない(対応ブラウザのみ) */
+let lock=null;
+async function wake(){try{if('wakeLock' in navigator&&!lock){lock=await navigator.wakeLock.request('screen');lock.addEventListener('release',()=>lock=null)}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')wake()});
+
+/* ---------- リモコン(ntfy.sh 経由) ---------- */
+let code='',es=null,stT;
+try{code=localStorage.getItem('sceneryCode')||''}catch(e){}
+function newCode(){const a='abcdefghjkmnpqrstuvwxyz23456789';code=Array.from(crypto.getRandomValues(new Uint8Array(8)),b=>a[b%a.length]).join('');try{localStorage.setItem('sceneryCode',code)}catch(e){}}
+if(!/^[a-z0-9]{8}$/.test(code))newCode();
+const topic=()=>'https://ntfy.sh/kai-scenery-'+code;
+function rStat(t){$('rStat').textContent=t}
+function send(o){if(!S.remoteOn)return;fetch(topic(),{method:'POST',body:JSON.stringify({from:'display',...o})}).catch(()=>{})}
+function sendStateSoon(){clearTimeout(stT);stT=setTimeout(sendState,400)}
+function sendState(){
+  const it=history[history.length-1]||null;
+  send({type:'state',paused,settings:S,themes:THEMES.map(t=>[t[0],t[1]]),
+    fonts:[...$('font').options].map(o=>[o.value,o.textContent]),
+    now:it&&{title:it.title,artist:it.artist,lic:it.lic,thumb:it.url,art:!!it.art}});
+}
+const OK_KEYS=Object.keys(DEF).filter(k=>k!=='remoteOn');
+function handle(m){
+  if(!m||m.from!=='remote')return;
+  rStat('パソコンと接続しました');
+  if(m.cmd==='next'){clearTimeout(timer);next();return}
+  if(m.cmd==='prev'){prev();return}
+  if(m.cmd==='block'){blockNow();return}
+  if(m.cmd==='pause'){if(!paused)$('bPause').click();sendStateSoon();return}
+  if(m.cmd==='play'){if(paused)$('bPause').click();sendStateSoon();return}
+  if(m.cmd==='set'&&m.settings&&typeof m.settings==='object'){
+    let th=false,iv=false;
+    for(const k of Object.keys(m.settings)){if(!OK_KEYS.includes(k))continue;const v=m.settings[k];
+      if(typeof v!==typeof DEF[k]&&!(k==='themes'&&Array.isArray(v)))continue;
+      if(k==='themes'){const ok=v.filter(x=>WORDS[x]);if(!ok.length)continue;S.themes=ok;th=true;continue}
+      if(k==='interval'){S.interval=Math.min(600,Math.max(3,v));iv=true;continue}
+      S[k]=v}
+    save();syncForm();applyClock();
+    if(th)reloadPhotos();else if(iv)schedule(S.interval);
+    sendStateSoon();return}
+  if(m.cmd==='hello')sendStateSoon();
+}
+function connect(){
+  if(es){es.close();es=null}
+  $('code').textContent=code;
+  $('rUrl').textContent=new URL('remote.html',location.href).href.replace(/^file:.*/,'remote.html');
+  if(!S.remoteOn){rStat('オフ');return}
+  rStat('接続待ち…');
+  try{es=new EventSource(topic()+'/sse');
+    es.onmessage=e=>{try{const d=JSON.parse(e.data);if(d.event==='message')handle(JSON.parse(d.message))}catch(x){}};
+    es.onopen=()=>{if($('rStat').textContent!=='パソコンと接続しました')rStat('リモコンを待っています')};
+    es.onerror=()=>rStat('接続が切れました。再接続中…');
+  }catch(e){rStat('この環境ではリモコンを使えません')}
+}
+$('remoteOn').addEventListener('change',e=>{S.remoteOn=e.target.checked;save();connect()});
+$('newCode').addEventListener('click',()=>{newCode();connect()});
+
+/* 開始 */
+syncForm();applyClock();
+setInterval(tick,1000);
+wake();
+refill().then(next);
+showBar();
+connect();
+}
+</script>
+</body>
+</html>

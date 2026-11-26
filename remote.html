@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>スライドショーのリモコン</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;min-width:0}
+body{background:#121418;color:#eef1f4;font:16px/1.55 "Noto Sans JP",sans-serif;min-height:100vh}
+.wrap{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:26px;margin-bottom:4px}
+.sub{color:#9fb4c8;font-size:14px;margin-bottom:20px}
+.card{background:#1c2026;border:1px solid #2c323b;border-radius:14px;padding:18px;margin-bottom:16px}
+.pair{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type=text]{font:22px "Noto Sans JP",monospace;letter-spacing:.12em;background:#2a2e35;color:#fff;border:1px solid #444;border-radius:10px;height:48px;padding:0 12px;width:220px;text-transform:lowercase}
+button,.btn{font:500 16px "Noto Sans JP",sans-serif;color:#fff;background:#2a2e35;border:1px solid #3d444e;border-radius:10px;min-height:48px;padding:0 18px;cursor:pointer}
+button.primary{background:#3b6ea5;border-color:#3b6ea5}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #7fb2e5;outline-offset:2px}
+#stat{font-size:14px;color:#9fb4c8}
+#stat.ok{color:#7fd89a}
+.grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px}
+@media(max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
+#preview{aspect-ratio:16/10;border-radius:10px;background:#000 center/cover no-repeat;margin-bottom:10px;display:flex;align-items:center;justify-content:center;color:#666}
+#preview.art{background-size:contain}
+#nowT{font-weight:700}
+#nowA{font-size:13px;color:#9fb4c8}
+.ctl{display:flex;gap:10px;margin-top:14px}
+.ctl button{flex:1;font-size:20px}
+h2{font-size:16px;margin:0 0 10px;color:#cfe0f0}
+#themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
+#themes label{display:flex;align-items:center;gap:8px;background:#2a2e35;border:1px solid #3d444e;border-radius:8px;min-height:44px;padding:0 10px;font-size:15px;cursor:pointer}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0;font-size:15px}
+.row label{flex:1}
+select,input[type=number]{font:16px "Noto Sans JP",sans-serif;background:#2a2e35;color:#fff;border:1px solid #444;border-radius:8px;min-height:40px;padding:0 8px;max-width:200px}
+input[type=range]{width:180px}
+input[type=color]{width:56px;height:40px;border:none;background:none}
+input[type=checkbox]{width:22px;height:22px}
+#posGrid{display:grid;grid-template-columns:repeat(3,44px);gap:4px}
+#posGrid button{min-height:36px;padding:0;font-size:15px}
+#posGrid button.on{background:#3b6ea5}
+#main{display:none}
+.note{font-size:12px;color:#7d8996;margin-top:10px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>スライドショーのリモコン</h1>
+  <p class="sub">Fireタブレットの設定画面に出ている「接続コード」を入れてください。</p>
+
+  <div class="card">
+    <div class="pair">
+      <input type="text" id="code" maxlength="8" placeholder="接続コード" autocomplete="off">
+      <button class="primary" id="connect">接続</button>
+      <span id="stat">未接続</span>
+    </div>
+  </div>
+
+  <div id="main">
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>いま表示中</h2>
+          <div id="preview">—</div>
+          <div id="nowT"></div><div id="nowA"></div>
+          <div class="ctl">
+            <button id="prev" aria-label="前へ">◀</button>
+            <button id="pause">一時停止</button>
+            <button id="next" aria-label="次へ">▶</button>
+          </div>
+          <button id="block" style="width:100%;margin-top:10px">この画像を出さない</button>
+        </div>
+        <div class="card">
+          <h2>テーマ</h2>
+          <div id="themes"></div>
+          <div class="row" style="margin-top:12px">
+            <button id="tAll">すべて選ぶ</button>
+            <button class="primary" id="tApply">このテーマで表示</button>
+          </div>
+          <div class="row"><label for="interval">切り替え(秒)</label><input type="number" id="interval" min="3" max="600"></div>
+          <div class="row"><label for="zoom">ゆっくりズーム</label><input type="checkbox" id="zoom"></div>
+          <div class="row"><label for="credit">作者・撮影者の表示</label><input type="checkbox" id="credit"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>時計</h2>
+        <div class="row"><label for="showClock">時計を表示</label><input type="checkbox" id="showClock"></div>
+        <div class="row"><label for="font">書体</label><select id="font"></select></div>
+        <div class="row"><label for="weight">太さ</label><select id="weight"><option value="300">細い</option><option value="500">普通</option><option value="700">太い</option></select></div>
+        <div class="row"><label for="size">大きさ</label><input type="range" id="size" min="4" max="30" step="0.5"></div>
+        <div class="row"><label for="color">文字色</label><input type="color" id="color"></div>
+        <div class="row"><label for="opacity">不透明度</label><input type="range" id="opacity" min="0.2" max="1" step="0.05"></div>
+        <div class="row"><label for="shadow">影をつける</label><input type="checkbox" id="shadow"></div>
+        <div class="row"><label for="h24">24時間表示</label><input type="checkbox" id="h24"></div>
+        <div class="row"><label for="showSec">秒を表示</label><input type="checkbox" id="showSec"></div>
+        <div class="row"><label for="showDate">日付を表示</label><input type="checkbox" id="showDate"></div>
+        <div class="row"><label>位置</label><div id="posGrid"></div></div>
+        <p class="note">変更はすぐFireに反映されます。キーボードの ← → で写真送り、スペースで一時停止もできます。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+let code='',es=null,S=null,paused=false,lastSeen=0,built=false,pend={},sendT;
+try{code=localStorage.getItem('sceneryRemoteCode')||''}catch(e){}
+$('code').value=code;
+
+const topic=()=>'https://ntfy.sh/kai-scenery-'+code;
+function stat(t,ok){$('stat').textContent=t;$('stat').className=ok?'ok':''}
+function send(o){return fetch(topic(),{method:'POST',body:JSON.stringify({from:'remote',...o})}).catch(()=>stat('送信できませんでした'))}
+function setLater(k,v){pend[k]=v;clearTimeout(sendT);sendT=setTimeout(()=>{const p=pend;pend={};send({cmd:'set',settings:p})},350)}
+
+function connect(){
+  const v=$('code').value.trim().toLowerCase();
+  if(!/^[a-z0-9]{8}$/.test(v)){stat('8文字の接続コードを入れてください');return}
+  code=v;try{localStorage.setItem('sceneryRemoteCode',code)}catch(e){}
+  if(es)es.close();
+  stat('Fireを探しています…');
+  es=new EventSource(topic()+'/sse');
+  es.onopen=()=>send({cmd:'hello'});
+  es.onmessage=e=>{try{const d=JSON.parse(e.data);if(d.event==='message'){const m=JSON.parse(d.message);if(m.from==='display'&&m.type==='state')onState(m)}}catch(x){}};
+  es.onerror=()=>stat('接続が切れました。再接続中…');
+  setTimeout(()=>{if(!lastSeen)stat('Fireから応答がありません。Fireでスライドショーが開いているか、コードが合っているか確認してください')},8000);
+}
+$('connect').addEventListener('click',connect);
+$('code').addEventListener('keydown',e=>{if(e.key==='Enter')connect()});
+setInterval(()=>{if(lastSeen){const s=Math.round((Date.now()-lastSeen)/1000);stat(s<40?'Fireと接続中':'Fireから '+s+' 秒応答がありません',s<40)}},5000);
+
+function build(m){
+  $('themes').innerHTML=m.themes.map(t=>`<label><input type="checkbox" value="${esc(t[0])}">${esc(t[1])}</label>`).join('');
+  $('font').innerHTML=m.fonts.map(f=>`<option value="${esc(f[0])}">${esc(f[1])}</option>`).join('');
+  $('posGrid').innerHTML=['↖','↑','↗','←','●','→','↙','↓','↘'].map((t,i)=>`<button data-p="${i}">${t}</button>`).join('');
+  built=true;$('main').style.display='block';
+}
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function onState(m){
+  lastSeen=Date.now();stat('Fireと接続中',true);
+  if(!built)build(m);
+  S=m.settings;paused=!!m.paused;
+  $('pause').textContent=paused?'再生':'一時停止';
+  const a=document.activeElement;
+  for(const k of ['interval','font','weight','size','color','opacity'])if($(k)!==a&&!(k in pend))$(k).value=S[k];
+  for(const k of ['zoom','credit','showClock','shadow','h24','showSec','showDate'])if(!(k in pend))$(k).checked=!!S[k];
+  if(!themeEdit)$('themes').querySelectorAll('input').forEach(c=>c.checked=S.themes.includes(c.value));
+  $('posGrid').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p==S.pos));
+  const n=m.now;
+  if(n){const pv=$('preview');pv.textContent='';pv.style.backgroundImage='url("'+String(n.thumb).replace(/"/g,'%22')+'")';pv.classList.toggle('art',!!n.art);
+    $('nowT').textContent=n.title||'';$('nowA').textContent=[n.artist,n.lic].filter(Boolean).join(' / ')}
+}
+
+$('next').addEventListener('click',()=>send({cmd:'next'}));
+$('prev').addEventListener('click',()=>send({cmd:'prev'}));
+$('block').addEventListener('click',()=>send({cmd:'block'}));
+$('pause').addEventListener('click',()=>send({cmd:paused?'play':'pause'}));
+document.addEventListener('keydown',e=>{if(!built||/INPUT|SELECT/.test(document.activeElement.tagName))return;
+  if(e.key==='ArrowRight')send({cmd:'next'});if(e.key==='ArrowLeft')send({cmd:'prev'});
+  if(e.key===' '){e.preventDefault();$('pause').click()}});
+
+let themeEdit=false;
+$('themes').addEventListener('change',()=>{themeEdit=true});
+const chosen=()=>[...$('themes').querySelectorAll('input:checked')].map(c=>c.value);
+$('tAll').addEventListener('click',()=>{$('themes').querySelectorAll('input').forEach(c=>c.checked=true);themeEdit=true});
+$('tApply').addEventListener('click',()=>{const v=chosen();if(!v.length){stat('テーマを1つ以上選んでください');return}themeEdit=false;send({cmd:'set',settings:{themes:v}})});
+
+for(const k of ['font','weight','color'])$(k).addEventListener('input',e=>setLater(k,e.target.value));
+for(const k of ['size','opacity'])$(k).addEventListener('input',e=>setLater(k,+e.target.value));
+$('interval').addEventListener('change',e=>setLater('interval',Math.min(600,Math.max(3,+e.target.value||10))));
+for(const k of ['zoom','credit','showClock','shadow','h24','showSec','showDate'])$(k).addEventListener('change',e=>setLater(k,e.target.checked));
+$('posGrid').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  $('posGrid').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));setLater('pos',b.dataset.p)});
+
+if(code)connect();
+}
+</script>
+</body>
+</html>
