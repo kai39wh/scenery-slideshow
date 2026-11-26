@@ -110,7 +110,7 @@ input[type=checkbox]{width:24px;height:24px}
   <p class="note" style="margin-top:4px">パソコンで <b id="rUrl"></b> を開き、この接続コードを入れると操作できます。</p>
 
   <div class="row" style="margin-top:20px"><button class="btn ghost" id="bReset">初期設定に戻す</button></div>
-  <p class="note">写真は Wikimedia Commons の「秀逸な画像」から選んだテーマの写真を自動で取得しています。不適切になりやすい画像(裸体・暴力・死・戦争など)は自動で除外しています。気になる画像は「この画像を出さない」で今後表示されなくなります。各写真の著作権は撮影者にあり、画面右下に撮影者とライセンスを表示しています。画面をタップすると操作ボタンが出ます。</p>
+  <p class="note">写真は Wikimedia Commons の「秀逸な画像」から選んだテーマの写真を自動で取得しています。不適切になりやすい画像(裸体・暴力・死・戦争・虫・爬虫類など)は自動で除外しています。気になる画像は「この画像を出さない」で今後表示されなくなります。各写真の著作権は撮影者にあり、画面右下に撮影者とライセンスを表示しています。画面をタップすると操作ボタンが出ます。</p>
 </div>
 
 <script>
@@ -137,7 +137,7 @@ const THEMES=[
  ['desert','砂漠・峡谷',['desert','sand dunes','canyon']],
  ['city','夜景・街並み',['city skyline night','cityscape','old town']],
  ['japan','日本の風景',['Japan landscape','Kyoto','Japanese garden','shrine Japan']],
- ['animal','動物',['bird','wildlife landscape','cat','deer','butterfly']],
+ ['animal','動物',['bird','wildlife landscape','cat','deer','horse','fox']],
  ['island','島・南国',['island','tropical beach','lagoon']],
  ['painting','西洋絵画',['still life painting','Monet painting','Van Gogh painting','Vermeer painting','Pissarro painting','Sisley painting','landscape oil painting'],1],
  ['lpainting','風景画',['landscape painting','seascape painting','Turner painting','Hudson River School painting','Constable painting'],1],
@@ -150,8 +150,8 @@ function words(){const w=S.themes.flatMap(k=>WORDS[k]||[]);return w.length?w:WOR
 const strip=h=>{const d=document.createElement('div');d.innerHTML=h||'';return (d.textContent||'').replace(/\s+/g,' ').trim()};
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 /* ---------- 安全フィルター(常に有効) ---------- */
-const NEG=' -nude -naked -nudity -erotic -sex -sexual -breast -topless -shunga -corpse -dead -death -war -battle -blood -execution -torture -crucifixion -massacre -hunting -weapon -skull -skeleton -surgery -anatomy';
-const BAD=/nud|naked|erotic|sexual|\bsex|breast|topless|genital|shunga|odalisque|\bvenus\b|bath(ing|er|ers)\b|lingerie|bikini|corpse|cadaver|\bdead\b|death|dying|\bwars?\b|battle|military|soldier|blood|execution|torture|crucifi|massacre|murder|wound|injur|surgery|medical|anatom|\bhunt|slaughter|butcher|weapon|\bguns?\b|rifle|skelet|skull|funeral|\bgraves?\b|cemeter|prison|accident|disaster|fire damage|protest|politic|裸|ヌード|春画|死|戦争|戦い|血|処刑|遺体/i;
+const NEG=' -nude -naked -nudity -erotic -sex -sexual -breast -topless -shunga -corpse -dead -death -war -battle -blood -execution -torture -crucifixion -massacre -hunting -weapon -skull -skeleton -surgery -anatomy -insect -insects -butterfly -moth -spider -beetle -snake -lizard -frog -reptile -amphibian -crocodile -turtle';
+const BAD=/nud|naked|erotic|sexual|\bsex|breast|topless|genital|shunga|odalisque|\bvenus\b|bath(ing|er|ers)\b|lingerie|bikini|corpse|cadaver|\bdead\b|death|dying|\bwars?\b|battle|military|soldier|blood|execution|torture|crucifi|massacre|murder|wound|injur|surgery|medical|anatom|\bhunt|slaughter|butcher|weapon|\bguns?\b|rifle|skelet|skull|funeral|\bgraves?\b|cemeter|prison|accident|disaster|fire damage|protest|politic|裸|ヌード|春画|死|戦争|戦い|血|処刑|遺体|insect|\bbugs?\b|beetle|butterfl|\bmoths?\b|caterpillar|larva|pupa|spider|arachn|\bants?\b|\bbees?\b|bumblebee|wasp|hornet|\bfl(y|ies)\b|mosquito|cockroach|cicada|dragonfl|damselfl|grasshopper|locust|mantis|centipede|millipede|\bworms?\b|earthworm|snail|\bslugs?\b|scorpion|\bticks?\b|arthropod|lepidopter|coleopter|hymenopter|dipter|odonat|orthopter|reptil|snake|serpent|python|viper|cobra|lizard|gecko|iguana|chameleon|crocodil|alligator|turtle|tortoise|squamat|testudin|amphibia|\bfrogs?\b|\btoads?\b|salamander|\bnewts?\b|虫|昆虫|蜘蛛|クモ|蝶|チョウ|蛾|蜂|ハチ|蟻|アリ|蛇|ヘビ|トカゲ|ヤモリ|カエル|蛙|ワニ|カメ|亀/i;
 let block=[];try{block=JSON.parse(localStorage.getItem('sceneryBlock')||'[]')}catch(e){}
 function blockNow(){const it=history[history.length-1];if(!it)return;
   if(!block.includes(it.id))block.push(it.id);if(block.length>800)block=block.slice(-800);
