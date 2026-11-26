@@ -140,6 +140,7 @@ const THEMES=[
  ['japan','日本の風景',['Japan landscape','Kyoto'],0,['Japan','Kyoto','Japanese gardens','Mount Fuji'],/japan|kyoto|tokyo|nara|osaka|hokkaido|fuji|shrine|temple|jinja|日本|京都|神社|寺/i],
  ['animal','動物',['bird','mammal'],0,['birds','mammals','Felidae','Equidae','Cervidae','Canidae'],/bird|mammal|aves|felid|equid|cervid|canid|\bcat\b|horse|deer|fox|wolf|bear|owl|eagle|swan|duck|heron|parrot|鳥|猫|馬|鹿|狐/i],
  ['island','島・南国',['island','tropical beach'],0,['islands','beaches','lagoons','atolls'],/island|isle|beach|lagoon|atoll|tropic|島|南国/i],
+ ['masterpiece','世界の名画',['famous painting','masterpiece painting'],1,['paintings','Google Art Project paintings'],/painting|oil on|canvas|panel|fresco|tempera|絵画|油彩/i],
  ['painting','西洋絵画',['Monet painting','Van Gogh painting','Vermeer painting','still life painting'],1,['paintings','still life paintings','Paintings by Claude Monet','Paintings by Vincent van Gogh','Paintings by Johannes Vermeer','Paintings by Camille Pissarro','Paintings by Alfred Sisley','Impressionist paintings'],/painting|oil on canvas|monet|van gogh|vermeer|pissarro|sisley|still life|impressionis|絵画|油彩/i],
  ['lpainting','風景画',['landscape painting','seascape painting'],1,['landscape paintings','marine art','Paintings by J. M. W. Turner','Paintings by John Constable','Hudson River School paintings','Landscape paintings by Claude Monet'],/landscape painting|seascape|marine art|turner|constable|hudson river|painting|風景画/i],
  ['ukiyoe','浮世絵・日本画',['ukiyo-e','Hokusai','Hiroshige'],1,['ukiyo-e','Thirty-six Views of Mount Fuji','One Hundred Famous Views of Edo','The Fifty-three Stations of the Tōkaidō','Woodblock prints by Hiroshige','Woodblock prints by Katsushika Hokusai','Japanese paintings'],/ukiyo|hokusai|hiroshige|woodblock|japanese painting|edo|tokaido|浮世絵|北斎|広重|日本画/i],
@@ -154,14 +155,14 @@ const strip=h=>{const d=document.createElement('div');d.innerHTML=h||'';return (
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 /* ---------- 安全フィルター(常に有効) ---------- */
 const NEG=' -nude -naked -erotic -insect -snake -corpse -war'; // 検索文は短く保ち、細かい除外は下の BAD で行う
-const BAD=/nud|naked|erotic|sexual|\bsex|breast|topless|genital|shunga|odalisque|\bvenus\b|bath(ing|er|ers)\b|lingerie|bikini|corpse|cadaver|\bdead\b|death|dying|\bwars?\b|battle|military|soldier|blood|execution|torture|crucifi|massacre|murder|wound|injur|surgery|medical|anatom|\bhunt|slaughter|butcher|weapon|\bguns?\b|rifle|skelet|skull|funeral|\bgraves?\b|cemeter|prison|accident|disaster|fire damage|protest|politic|裸|ヌード|春画|死|戦争|戦い|血|処刑|遺体|insect|\bbugs?\b|beetle|butterfl|\bmoths?\b|caterpillar|larva|pupa|spider|arachn|\bants?\b|\bbees?\b|bumblebee|wasp|hornet|\bfl(y|ies)\b|mosquito|cockroach|cicada|dragonfl|firefl|damselfl|grasshopper|locust|mantis|centipede|millipede|\bworms?\b|earthworm|snail|\bslugs?\b|scorpion|\bticks?\b|arthropod|lepidopter|coleopter|hymenopter|dipter|odonat|orthopter|reptil|snake|serpent|python|viper|cobra|lizard|gecko|iguana|chameleon|crocodil|alligator|turtle|tortoise|squamat|testudin|amphibia|\bfrogs?\b|\btoads?\b|salamander|\bnewts?\b|虫|昆虫|蜘蛛|クモ|蝶|チョウ|蛾|蛍|ホタル|蜂|ハチ|蟻|アリ|蛇|ヘビ|トカゲ|ヤモリ|カエル|蛙|ワニ|カメ|亀/i;
+const BAD=/nud|naked|erotic|sexual|\bsex|breast|topless|genital|shunga|odalisque|\bvenus\b|bath(ing|er|ers)\b|lingerie|bikini|corpse|cadaver|\bdead\b|death|dying|\bwars?\b|battle|military|soldier|blood|execution|torture|crucifi|massacre|murder|wound|injur|surgery|medical|anatom|\bhunt|slaughter|butcher|weapon|\bguns?\b|rifle|skelet|skull|funeral|\bgraves?\b|cemeter|prison|accident|disaster|fire damage|protest|politic|裸|ヌード|春画|死|戦争|戦い|血|処刑|遺体|cannibal|devour|decapit|behead|severed|judith|holofernes|salome|martyr|medusa|\bhell\b|inferno|demon|devil|satan|witch|sabbath|suicide|drown|plague|nightmare|earthly delights|d[eé]jeuner sur l|bathsheba|susanna|\bleda\b|dana[eë]|adam and eve|\bmaja\b|graces|olympia|insect|\bbugs?\b|beetle|butterfl|\bmoths?\b|caterpillar|larva|pupa|spider|arachn|\bants?\b|\bbees?\b|bumblebee|wasp|hornet|\bfl(y|ies)\b|mosquito|cockroach|cicada|dragonfl|firefl|damselfl|grasshopper|locust|mantis|centipede|millipede|\bworms?\b|earthworm|snail|\bslugs?\b|scorpion|\bticks?\b|arthropod|lepidopter|coleopter|hymenopter|dipter|odonat|orthopter|reptil|snake|serpent|python|viper|cobra|lizard|gecko|iguana|chameleon|crocodil|alligator|turtle|tortoise|squamat|testudin|amphibia|\bfrogs?\b|\btoads?\b|salamander|\bnewts?\b|虫|昆虫|蜘蛛|クモ|蝶|チョウ|蛾|蛍|ホタル|蜂|ハチ|蟻|アリ|蛇|ヘビ|トカゲ|ヤモリ|カエル|蛙|ワニ|カメ|亀/i;
 let block=[];try{block=JSON.parse(localStorage.getItem('sceneryBlock')||'[]')}catch(e){}
 function blockNow(){const it=history[history.length-1];if(!it)return;
   if(!block.includes(it.id))block.push(it.id);if(block.length>800)block=block.slice(-800);
   try{localStorage.setItem('sceneryBlock',JSON.stringify(block))}catch(e){}
   queue=queue.filter(q=>q.id!==it.id);history.pop();clearTimeout(timer);next()}
 /* mode 0: テーマ別の分類から直接 / 1: 分類の下位まで含めて / 2: 秀逸画像をキーワード検索+確認 / 3: キーワード検索+確認 */
-const catName=c=>/^(Paintings|Landscape paintings|Woodblock|Thirty|One Hundred|The Fifty|Hudson|Impressionist|Japanese paintings|Mount Fuji$|Kyoto$|Japan$)/.test(c)?[c]:['Featured pictures of '+c,'Quality images of '+c];
+const catName=c=>/^(Google|Paintings|Landscape paintings|Woodblock|Thirty|One Hundred|The Fifty|Hudson|Impressionist|Japanese paintings|Mount Fuji$|Kyoto$|Japan$)/.test(c)?[c]:['Featured pictures of '+c,'Quality images of '+c];
 async function fetchBatch(mode,th){
   const art=ART[th];let q;
   if(mode===0){
@@ -200,6 +201,40 @@ async function fetchBatch(mode,th){
   }
   return out;
 }
+/* ---------- 世界の名画(Wikidata で多くの言語版に記事がある絵画) ---------- */
+let MP=null;
+const MPQ=`SELECT ?p ?img ?n (SAMPLE(?pl) AS ?ja) (SAMPLE(?pe) AS ?en) (SAMPLE(?cl) AS ?cja) (SAMPLE(?ce) AS ?cen) (SAMPLE(?y) AS ?year) (GROUP_CONCAT(DISTINCT ?dl;separator="|") AS ?dep) WHERE {
+ { SELECT ?p ?img ?n WHERE { ?p wdt:P31 wd:Q3305213; wikibase:sitelinks ?n; wdt:P18 ?img. FILTER(?n>=20)
+   FILTER NOT EXISTS{?p wdt:P180 wd:Q10791} FILTER NOT EXISTS{?p wdt:P136 wd:Q40446} } ORDER BY DESC(?n) LIMIT 500 }
+ OPTIONAL{?p wdt:P571 ?d. BIND(YEAR(?d) AS ?y)}
+ OPTIONAL{?p rdfs:label ?pl FILTER(LANG(?pl)="ja")}
+ OPTIONAL{?p rdfs:label ?pe FILTER(LANG(?pe)="en")}
+ OPTIONAL{?p wdt:P170 ?c. OPTIONAL{?c rdfs:label ?cl FILTER(LANG(?cl)="ja")} OPTIONAL{?c rdfs:label ?ce FILTER(LANG(?ce)="en")}}
+ OPTIONAL{?p wdt:P180 ?dd. ?dd rdfs:label ?dl FILTER(LANG(?dl)="en")}
+} GROUP BY ?p ?img ?n ORDER BY DESC(?n)`;
+async function loadMP(){
+  if(MP)return MP;
+  try{const c=JSON.parse(localStorage.getItem('sceneryMP')||'null');if(c&&Date.now()-c.t<7*864e5&&c.list.length>20)return MP=c.list}catch(e){}
+  const r=await fetch('https://query.wikidata.org/sparql?format=json&query='+encodeURIComponent(MPQ),{headers:{Accept:'application/sparql-results+json'}});
+  const j=await r.json();const v=b=>b?b.value:'';
+  const W=Math.min(2560,Math.round(Math.max(screen.width,screen.height)*(window.devicePixelRatio>1?1.5:1)));
+  const list=[];
+  for(const b of j.results.bindings){
+    const text=[v(b.ja),v(b.en),v(b.cen),v(b.dep)].join(' ');
+    if(BAD.test(text))continue;
+    list.push({id:'wd:'+v(b.p).split('/').pop(),url:v(b.img).replace(/^http:/,'https:')+'?width='+W,
+      title:(v(b.ja)||v(b.en)).slice(0,80),artist:(v(b.cja)||v(b.cen)).slice(0,60),lic:v(b.year)?v(b.year)+'年':'',art:true});
+  }
+  if(list.length<20)throw new Error('few');
+  try{localStorage.setItem('sceneryMP',JSON.stringify({t:Date.now(),list}))}catch(e){}
+  return MP=list;
+}
+async function fetchMP(){
+  const list=(await loadMP()).filter(x=>!seen.has(x.id)&&!block.includes(x.id));
+  if(list.length<8)list.forEach(x=>seen.delete(x.id));
+  const out=list.sort(()=>Math.random()-.5).slice(0,8);out.forEach(x=>seen.add(x.id));
+  return out;
+}
 function themeList(){const v=S.themes.filter(k=>SUBJ[k]);return v.length?v:['mountain']}
 async function refill(){
   if(loading)return; loading=true;
@@ -207,7 +242,8 @@ async function refill(){
     const ths=themeList().sort(()=>Math.random()-.5);
     for(let i=0;i<Math.max(3,ths.length)&&queue.length<10;i++){
       const th=ths[i%ths.length];let b=[];
-      for(const mode of [0,1,2,3]){
+      if(th==='masterpiece'){try{b=await fetchMP()}catch(e){}}
+      if(b.length<4)for(const mode of [0,1,2,3]){
         try{b=b.concat(await fetchBatch(mode,th))}catch(e){}
         if(b.length>=4)break;
       }
